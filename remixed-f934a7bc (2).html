@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PolicyDesk</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f0f4f8; color: #1a2744; font-family: 'Inter', sans-serif; min-height: 100vh; }
+  button, select, input, textarea { font-family: 'Inter', sans-serif; }
+
+  #header { background: #fff; border-bottom: 1px solid #dde3ed; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px #1a274410; }
+  .logo { font-size: 20px; font-weight: 700; color: #1a2744; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
+  .logo-icon { width: 32px; height: 32px; background: #1a2744; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2.5; }
+  .sub { font-size: 11px; color: #8a97b0; margin-top: 1px; }
+  #btn-new { background: #22c55e; border: none; border-radius: 8px; color: #fff; padding: 9px 20px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background .15s; }
+  #btn-new:hover { background: #16a34a; }
+
+  #stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; padding: 20px 28px; background: #f0f4f8; }
+  .stat { background: #1a2744; border-radius: 14px; padding: 20px 22px; color: #fff; }
+  .stat-val { font-size: 28px; font-weight: 700; }
+  .stat-lbl { font-size: 11px; color: #8da3c8; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em; }
+  .stat-icon { font-size: 22px; margin-bottom: 8px; }
+
+  #toolbar { padding: 0 28px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 4px; background: #fff; border: 1px solid #dde3ed; border-radius: 10px; padding: 4px; }
+  .tab { background: none; border: none; border-radius: 7px; color: #8a97b0; padding: 7px 16px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+  .tab.active { background: #1a2744; color: #fff; }
+  #search { background: #fff; border: 1px solid #dde3ed; border-radius: 8px; color: #1a2744; padding: 8px 14px; font-size: 13px; outline: none; flex: 1; min-width: 160px; }
+  #search::placeholder { color: #aab4c8; }
+  #search:focus { border-color: #1a2744; }
+
+  #table-wrap { background: #fff; margin: 0 28px 28px; border-radius: 14px; overflow: hidden; border: 1px solid #dde3ed; box-shadow: 0 2px 8px #1a274408; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: #f7f9fc; }
+  th { padding: 11px 16px; text-align: left; color: #8a97b0; font-weight: 700; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid #eaeff5; white-space: nowrap; }
+  td { padding: 12px 16px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #f7f9fc; }
+  .name-cell { font-weight: 600; color: #1a2744; white-space: nowrap; }
+  .phone-cell { color: #5a6a8a; white-space: nowrap; }
+  .state-cell { color: #8a97b0; }
+  .carrier-cell { color: #5a6a8a; }
+  .premium-cell { color: #22c55e; font-weight: 600; white-space: nowrap; }
+  .notes-cell { color: #8a97b0; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .badge { border-radius: 5px; padding: 3px 9px; font-size: 11px; font-weight: 700; white-space: nowrap; display: inline-block; }
+  .btn-edit { background: #f0f4f8; border: none; border-radius: 6px; color: #5a6a8a; padding: 5px 12px; cursor: pointer; font-size: 11px; font-weight: 600; margin-right: 4px; transition: background .15s; }
+  .btn-del { background: none; border: 1px solid #fecaca; border-radius: 6px; color: #f87171; padding: 5px 9px; cursor: pointer; font-size: 11px; transition: all .15s; }
+  .btn-edit:hover { background: #e2e8f0; }
+  .btn-del:hover { background: #fee2e2; }
+  .empty-row td { padding: 48px; text-align: center; color: #aab4c8; }
+
+  /* CALENDAR */
+  #cal-view { display: none; background: #fff; margin: 0 28px 28px; border-radius: 14px; border: 1px solid #dde3ed; overflow: hidden; box-shadow: 0 2px 8px #1a274408; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid #eaeff5; }
+  .cal-month { font-size: 18px; font-weight: 700; color: #1a2744; }
+  .cal-btn { background: #f0f4f8; border: none; border-radius: 7px; color: #1a2744; padding: 6px 14px; cursor: pointer; font-size: 16px; font-weight: 700; }
+  .cal-btn:hover { background: #e2e8f0; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); }
+  .cal-dow { background: #f7f9fc; padding: 8px 0; text-align: center; font-size: 10px; font-weight: 700; color: #8a97b0; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid #eaeff5; }
+  .cal-day { min-height: 88px; padding: 7px; border-right: 1px solid #f0f4f8; border-bottom: 1px solid #f0f4f8; cursor: default; }
+  .cal-day.other-month { background: #fafbfc; opacity: .5; }
+  .cal-day.today { background: #f0f6ff; }
+  .cal-day.today .day-num { color: #1a2744; font-weight: 700; background: #1a2744; color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+  .day-num { font-size: 12px; color: #8a97b0; margin-bottom: 4px; }
+  .cal-event { background: #fef9ec; border-left: 3px solid #f59e0b; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: 600; color: #92400e; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .cal-event:hover { filter: brightness(.95); }
+  .cal-event.sold { background: #f0fdf4; border-color: #22c55e; color: #166534; }
+  .cal-event.other { background: #f5f3ff; border-color: #8b5cf6; color: #5b21b6; }
+
+  /* PANEL */
+  #event-panel { position: fixed; right: 0; top: 0; height: 100vh; width: 300px; background: #fff; border-left: 1px solid #dde3ed; z-index: 500; transform: translateX(100%); transition: transform .25s; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; box-shadow: -4px 0 20px #1a274415; }
+  #event-panel.open { transform: translateX(0); }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; }
+  .panel-title { font-size: 17px; font-weight: 700; color: #1a2744; }
+  #btn-close-panel { background: #f0f4f8; border: none; border-radius: 6px; color: #5a6a8a; cursor: pointer; font-size: 16px; width: 30px; height: 30px; }
+  .panel-field { display: flex; flex-direction: column; gap: 2px; }
+  .panel-lbl { font-size: 10px; font-weight: 700; color: #8a97b0; text-transform: uppercase; letter-spacing: 0.08em; }
+  .panel-val { font-size: 13px; color: #1a2744; font-weight: 500; }
+  .panel-notes { background: #f7f9fc; border-radius: 8px; padding: 10px; font-size: 13px; color: #5a6a8a; line-height: 1.5; }
+  .panel-edit-btn { background: #1a2744; border: none; border-radius: 8px; color: #fff; padding: 10px; cursor: pointer; font-size: 13px; font-weight: 600; width: 100%; margin-top: 4px; }
+  .panel-edit-btn:hover { background: #253563; }
+
+  /* MODAL */
+  #modal-overlay { position: fixed; inset: 0; background: #1a274455; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(2px); }
+  #modal-overlay.open { display: flex; }
+  #modal-box { background: #fff; border-radius: 16px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; padding: 28px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 20px 60px #1a274430; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; }
+  .modal-title { font-size: 20px; font-weight: 700; color: #1a2744; }
+  #btn-close-modal { background: #f0f4f8; border: none; border-radius: 8px; color: #5a6a8a; cursor: pointer; font-size: 16px; width: 32px; height: 32px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 11px; font-weight: 700; color: #5a6a8a; letter-spacing: 0.07em; text-transform: uppercase; }
+  .field input, .field select, .field textarea { background: #f7f9fc; border: 1.5px solid #dde3ed; border-radius: 8px; color: #1a2744; padding: 9px 12px; font-size: 13px; outline: none; width: 100%; transition: border .15s; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: #1a2744; background: #fff; }
+  .field textarea { resize: vertical; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; }
+  #btn-cancel { background: #f0f4f8; border: none; border-radius: 8px; color: #5a6a8a; padding: 10px 20px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  #btn-save { background: #22c55e; border: none; border-radius: 8px; color: #fff; padding: 10px 24px; cursor: pointer; font-size: 13px; font-weight: 700; }
+  #btn-save:hover { background: #16a34a; }
+
+  .draft-badge { background: #fff7ed; border: 1px solid #fed7aa; color: #c2410c; border-radius: 5px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+    <div>
+      <div class="logo">PolicyDesk</div>
+      <div class="sub">Life Insurance · Agent CRM</div>
+    </div>
+  </div>
+  <button id="btn-new">+ New Lead</button>
+</div>
+
+<div id="stats">
+  <div class="stat">
+    <div class="stat-icon">📞</div>
+    <div class="stat-val" id="stat-callbacks">0</div>
+    <div class="stat-lbl">Today's Callbacks</div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon">✅</div>
+    <div class="stat-val" id="stat-sold">0</div>
+    <div class="stat-lbl">Policies Sold</div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon">💰</div>
+    <div class="stat-val" id="stat-premium">$0</div>
+    <div class="stat-lbl">Total Premium</div>
+  </div>
+</div>
+
+<div id="toolbar">
+  <div class="tabs">
+    <button class="tab active" data-tab="callbacks" id="tab-callbacks">Callbacks</button>
+    <button class="tab" data-tab="sold">Sold</button>
+    <button class="tab" data-tab="calendar">📅 Calendar</button>
+  </div>
+  <input type="text" id="search" placeholder="Search name, phone, carrier, state…"/>
+</div>
+
+<div id="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th><th>Phone</th><th>ST</th>
+        <th>Policy Type</th><th>Carrier</th><th>App Status</th>
+        <th>Annual Premium</th><th>Callback / Draft</th><th>Notes</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<div id="cal-view">
+  <div class="cal-nav">
+    <button class="cal-btn" id="cal-prev">‹</button>
+    <div class="cal-month" id="cal-month-label"></div>
+    <button class="cal-btn" id="cal-next">›</button>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+</div>
+
+<div id="event-panel">
+  <div class="panel-header">
+    <div class="panel-title" id="panel-name"></div>
+    <button id="btn-close-panel">✕</button>
+  </div>
+  <div class="panel-field"><div class="panel-lbl">Phone</div><div class="panel-val" id="panel-phone"></div></div>
+  <div class="panel-field"><div class="panel-lbl">State</div><div class="panel-val" id="panel-state"></div></div>
+  <div class="panel-field"><div class="panel-lbl">Policy Type</div><div class="panel-val" id="panel-ptype"></div></div>
+  <div class="panel-field"><div class="panel-lbl">Carrier</div><div class="panel-val" id="panel-carrier"></div></div>
+  <div class="panel-field"><div class="panel-lbl">App Status</div><div class="panel-val" id="panel-status"></div></div>
+  <div class="panel-field"><div class="panel-lbl">Annual Premium</div><div class="panel-val" id="panel-premium"></div></div>
+  <div class="panel-field"><div class="panel-lbl">Callback / Draft Date</div><div class="panel-val" id="panel-cb"></div></div>
+  <div class="panel-field"><div class="panel-lbl">Notes</div><div class="panel-notes" id="panel-notes"></div></div>
+  <button class="panel-edit-btn" id="panel-edit-btn">✏️ Edit Lead</button>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">New Lead</span>
+      <button id="btn-close-modal">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="field full"><label>Full Name</label><input id="f-name" type="text" placeholder="Jane Smith"/></div>
+      <div class="field"><label>Phone</label><input id="f-phone" type="tel" placeholder="(305) 000-0000"/></div>
+      <div class="field"><label>State</label><input id="f-state" type="text" placeholder="FL"/></div>
+      <div class="field">
+        <label>Policy Type</label>
+        <select id="f-ptype">
+          <option value=""></option>
+          <option>Term Life</option><option>Final Expense</option><option>IUL</option>
+          <option>Whole Life</option><option>Mortgage Protection</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Carrier</label><input id="f-carrier" type="text" placeholder="Aetna, Mutual Omaha…"/></div>
+      <div class="field">
+        <label>App Status</label>
+        <select id="f-status">
+          <option>Not Applied</option><option>Submitted</option><option>Pending Docs</option>
+          <option>Approved</option><option>Issued</option><option>Declined</option>
+        </select>
+      </div>
+      <div class="field"><label>Annual Premium ($)</label><input id="f-premium" type="number" placeholder="0.00"/></div>
+      <div class="field">
+        <label>Payment Mode</label>
+        <select id="f-pmode"><option>Monthly</option><option>Quarterly</option><option>Semi-Annual</option><option>Annual</option></select>
+      </div>
+      <div class="field"><label>Policy Number</label><input id="f-polnum" type="text" placeholder="Once issued"/></div>
+      <div class="field"><label id="cb-date-label">Callback Date</label><input id="f-cbdate" type="date"/></div>
+      <div class="field"><label id="cb-time-label">Callback Time</label><input id="f-cbtime" type="time"/></div>
+      <div class="field full"><label>Notes</label><textarea id="f-notes" rows="3" placeholder="Objections, draft date reminders, anything relevant…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-cancel">Cancel</button>
+      <button id="btn-save">Save Lead</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'policydesk_leads_v2';
+const STATUS_COLORS = {
+  'Not Applied':  { bg:'#f1f5f9', color:'#64748b' },
+  'Submitted':    { bg:'#eff6ff', color:'#2563eb' },
+  'Pending Docs': { bg:'#fffbeb', color:'#d97706' },
+  'Approved':     { bg:'#f0fdf4', color:'#16a34a' },
+  'Issued':       { bg:'#dcfce7', color:'#15803d' },
+  'Declined':     { bg:'#fef2f2', color:'#dc2626' },
+};
+
+let leads = [], activeTab = 'callbacks', editingId = null;
+let calYear, calMonth, panelLeadId = null;
+const now = new Date();
+calYear = now.getFullYear(); calMonth = now.getMonth();
+
+function loadLeads() {
+  try { leads = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { leads = []; }
+  if (!leads.length) {
+    const tod = getToday();
+    leads = [
+      { id:1, name:'Robert Castillo', phone:'(305) 441-9823', state:'FL', type:'callback', policyType:'Term Life', carrier:'Aetna', appStatus:'Not Applied', premium:'1704', paymentMode:'Monthly', policyNumber:'', callbackDate:tod, callbackTime:'10:00', notes:'Wants $500k. Call back Friday AM.' },
+      { id:2, name:'Denise Morales', phone:'(954) 220-7711', state:'FL', type:'sold', policyType:'Final Expense', carrier:'Mutual of Omaha', appStatus:'Issued', premium:'936', paymentMode:'Monthly', policyNumber:'MOO-229944', callbackDate:tod, callbackTime:'', notes:'Draft on the 15th. Remind 2 days before.' },
+      { id:3, name:'Marcus Webb', phone:'(786) 339-0042', state:'GA', type:'callback', policyType:'IUL', carrier:'North American', appStatus:'Submitted', premium:'2520', paymentMode:'Monthly', policyNumber:'', callbackDate:'', callbackTime:'', notes:'Interested in cash value.' },
+    ];
+    saveLeads();
+  }
+}
+function saveLeads() { localStorage.setItem(STORAGE_KEY, JSON.stringify(leads)); }
+function getToday() { return new Date().toISOString().split('T')[0]; }
+
+function badge(label, map) {
+  const c = map[label] || { bg:'#f1f5f9', color:'#64748b' };
+  return `<span class="badge" style="background:${c.bg};color:${c.color}">${label}</span>`;
+}
+
+function fmtCB(date, time) {
+  if (!date) return '—';
+  const d = new Date(date + (time ? 'T'+time : 'T00:00'));
+  let s = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  if (time) s += ' · ' + d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+  return s;
+}
+
+function getFiltered() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const tod = getToday();
+  let list = leads.filter(l => l.type === activeTab);
+  if (activeTab === 'callbacks') list = list.filter(l => l.callbackDate >= tod || !l.callbackDate);
+  if (q) list = list.filter(l =>
+    l.name.toLowerCase().includes(q) ||
+    l.phone.includes(q) ||
+    (l.carrier||'').toLowerCase().includes(q) ||
+    (l.state||'').toLowerCase().includes(q)
+  );
+  return list;
+}
+
+function updateStats() {
+  const tod = getToday();
+  const cbs = leads.filter(l => l.type === 'callback' && l.callbackDate === tod);
+  const sold = leads.filter(l => l.type === 'sold');
+  const prem = leads.reduce((s,l) => s+(parseFloat(l.premium)||0), 0);
+  document.getElementById('stat-callbacks').textContent = cbs.length;
+  document.getElementById('stat-sold').textContent = sold.length;
+  document.getElementById('stat-premium').textContent = '$'+prem.toLocaleString();
+  document.getElementById('tab-callbacks').textContent = cbs.length ? `Callbacks (${cbs.length})` : 'Callbacks';
+}
+
+function render() {
+  updateStats();
+  if (activeTab === 'calendar') {
+    document.getElementById('table-wrap').style.display = 'none';
+    document.getElementById('cal-view').style.display = 'block';
+    renderCalendar(); return;
+  }
+  document.getElementById('table-wrap').style.display = 'block';
+  document.getElementById('cal-view').style.display = 'none';
+
+  const tod = getToday();
+  const list = getFiltered();
+  const tbody = document.getElementById('tbody');
+  const isSold = activeTab === 'sold';
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="10">No ${isSold ? 'sold policies' : 'callbacks'} yet.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(l => {
+    const isToday = l.callbackDate === tod;
+    const cbColor = isToday ? '#d97706' : '#8a97b0';
+    const cbWeight = isToday ? '700' : '400';
+    const premStr = l.premium ? `$${parseFloat(l.premium).toLocaleString()}/yr` : '—';
+    const cbLabel = isSold ? 'Draft Date' : 'Callback';
+    return `<tr>
+      <td class="name-cell">${esc(l.name)}</td>
+      <td class="phone-cell">${esc(l.phone)}</td>
+      <td class="state-cell">${esc(l.state)}</td>
+      <td class="carrier-cell">${esc(l.policyType)||'—'}</td>
+      <td class="carrier-cell">${esc(l.carrier)||'—'}</td>
+      <td>${badge(l.appStatus, STATUS_COLORS)}</td>
+      <td class="premium-cell">${premStr}</td>
+      <td style="color:${cbColor};font-weight:${cbWeight};white-space:nowrap">${fmtCB(l.callbackDate, l.callbackTime)}</td>
+      <td class="notes-cell" title="${esc(l.notes)}">${esc(l.notes)||'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-edit" data-id="${l.id}">Edit</button>
+        <button class="btn-del" data-id="${l.id}">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* CALENDAR */
+function renderCalendar() {
+  const label = new Date(calYear, calMonth, 1).toLocaleDateString('en-US', { month:'long', year:'numeric' });
+  document.getElementById('cal-month-label').textContent = label;
+  const grid = document.getElementById('cal-grid');
+  const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  const tod = getToday();
+
+  const byDate = {};
+  leads.forEach(l => {
+    if (l.callbackDate) {
+      if (!byDate[l.callbackDate]) byDate[l.callbackDate] = [];
+      byDate[l.callbackDate].push(l);
+    }
+  });
+
+  const totalCells = Math.ceil((firstDay+daysInMonth)/7)*7;
+  for (let i = 0; i < totalCells; i++) {
+    let dayNum, dateStr, other = false;
+    if (i < firstDay) {
+      dayNum = daysInPrev - firstDay + i + 1;
+      const m = calMonth===0?12:calMonth, y = calMonth===0?calYear-1:calYear;
+      dateStr = `${y}-${String(m).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+      other = true;
+    } else if (i >= firstDay+daysInMonth) {
+      dayNum = i - firstDay - daysInMonth + 1;
+      const m = calMonth===11?1:calMonth+2, y = calMonth===11?calYear+1:calYear;
+      dateStr = `${y}-${String(m).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+      other = true;
+    } else {
+      dayNum = i - firstDay + 1;
+      dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+    }
+    const isToday = dateStr === tod;
+    const evts = byDate[dateStr] || [];
+    const dayNumHtml = isToday ? `<div class="day-num"><span>${dayNum}</span></div>` : `<div class="day-num">${dayNum}</div>`;
+    const evtHtml = evts.map(l => {
+      let cls = 'cal-event';
+      if (l.type === 'sold') cls += ' sold';
+      return `<div class="${cls}" data-id="${l.id}">${esc(l.name)}</div>`;
+    }).join('');
+    html += `<div class="cal-day${other?' other-month':''}${isToday?' today':''}">${dayNumHtml}${evtHtml}</div>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('.cal-event').forEach(el => {
+    el.addEventListener('click', e => { e.stopPropagation(); openPanel(leads.find(l => l.id === parseInt(el.dataset.id))); });
+  });
+}
+
+function openPanel(l) {
+  if (!l) return;
+  panelLeadId = l.id;
+  document.getElementById('panel-name').textContent = l.name;
+  document.getElementById('panel-phone').textContent = l.phone||'—';
+  document.getElementById('panel-state').textContent = l.state||'—';
+  document.getElementById('panel-ptype').textContent = l.policyType||'—';
+  document.getElementById('panel-carrier').textContent = l.carrier||'—';
+  document.getElementById('panel-status').textContent = l.appStatus||'—';
+  document.getElementById('panel-premium').textContent = l.premium ? `$${parseFloat(l.premium).toLocaleString()}/yr` : '—';
+  document.getElementById('panel-cb').textContent = fmtCB(l.callbackDate, l.callbackTime);
+  document.getElementById('panel-notes').textContent = l.notes||'No notes.';
+  document.getElementById('event-panel').classList.add('open');
+}
+function closePanel() { document.getElementById('event-panel').classList.remove('open'); panelLeadId = null; }
+
+/* MODAL */
+function openModal(lead) {
+  editingId = lead ? lead.id : null;
+  const isSold = lead ? lead.type === 'sold' : activeTab === 'sold';
+  document.getElementById('modal-title').textContent = lead ? 'Edit Lead' : (isSold ? 'New Sold Policy' : 'New Callback');
+  document.getElementById('cb-date-label').textContent = isSold ? 'Draft Date' : 'Callback Date';
+  document.getElementById('cb-time-label').textContent = isSold ? 'Draft Time' : 'Callback Time';
+  document.getElementById('f-name').value = lead?.name||'';
+  document.getElementById('f-phone').value = lead?.phone||'';
+  document.getElementById('f-state').value = lead?.state||'';
+  document.getElementById('f-ptype').value = lead?.policyType||'';
+  document.getElementById('f-carrier').value = lead?.carrier||'';
+  document.getElementById('f-status').value = lead?.appStatus||'Not Applied';
+  document.getElementById('f-premium').value = lead?.premium||'';
+  document.getElementById('f-pmode').value = lead?.paymentMode||'Monthly';
+  document.getElementById('f-polnum').value = lead?.policyNumber||'';
+  document.getElementById('f-cbdate').value = lead?.callbackDate||'';
+  document.getElementById('f-cbtime').value = lead?.callbackTime||'';
+  document.getElementById('f-notes').value = lead?.notes||'';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function saveLead() {
+  const data = {
+    name: document.getElementById('f-name').value.trim(),
+    phone: document.getElementById('f-phone').value.trim(),
+    state: document.getElementById('f-state').value.trim(),
+    policyType: document.getElementById('f-ptype').value,
+    carrier: document.getElementById('f-carrier').value.trim(),
+    appStatus: document.getElementById('f-status').value,
+    premium: document.getElementById('f-premium').value,
+    paymentMode: document.getElementById('f-pmode').value,
+    policyNumber: document.getElementById('f-polnum').value.trim(),
+    callbackDate: document.getElementById('f-cbdate').value,
+    callbackTime: document.getElementById('f-cbtime').value,
+    notes: document.getElementById('f-notes').value.trim(),
+  };
+  if (!data.name) { alert('Name is required.'); return; }
+  if (editingId) {
+    leads = leads.map(l => l.id === editingId ? { ...l, ...data } : l);
+  } else {
+    data.type = activeTab === 'sold' ? 'sold' : 'callback';
+    leads.push({ ...data, id: Date.now() });
+  }
+  saveLeads(); closeModal(); render();
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* EVENTS */
+document.getElementById('btn-new').onclick = () => openModal(null);
+document.getElementById('btn-close-modal').onclick = closeModal;
+document.getElementById('btn-cancel').onclick = closeModal;
+document.getElementById('btn-save').onclick = saveLead;
+document.getElementById('modal-overlay').onclick = e => { if (e.target === e.currentTarget) closeModal(); };
+document.getElementById('btn-close-panel').onclick = closePanel;
+document.getElementById('panel-edit-btn').onclick = () => { const l = leads.find(x => x.id === panelLeadId); closePanel(); openModal(l); };
+document.getElementById('cal-prev').onclick = () => { calMonth--; if (calMonth<0){calMonth=11;calYear--;} renderCalendar(); };
+document.getElementById('cal-next').onclick = () => { calMonth++; if (calMonth>11){calMonth=0;calYear++;} renderCalendar(); };
+
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    closePanel(); render();
+  };
+});
+
+document.getElementById('search').oninput = render;
+
+document.getElementById('tbody').onclick = e => {
+  const eb = e.target.closest('.btn-edit');
+  const db = e.target.closest('.btn-del');
+  if (eb) openModal(leads.find(l => l.id === parseInt(eb.dataset.id)));
+  if (db) { if (confirm('Remove this lead?')) { leads = leads.filter(l => l.id !== parseInt(db.dataset.id)); saveLeads(); render(); } }
+};
+
+loadLeads(); render();
+</script>
+</body>
+</html>
